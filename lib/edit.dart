@@ -11,12 +11,26 @@ class EditPage extends StatelessWidget {
     return Padding(
       padding: EdgeInsetsDirectional.all(10),
       child: Center(
-        child: TextField(
-          style: TextStyle(fontSize: 30),
-          controller: controller,
-          onChanged: (String s) {
-            cb(s);
-          },
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            SizedBox(
+              width: 200,
+              child: TextField(
+                style: TextStyle(fontSize: 30),
+                controller: controller,
+                onChanged: (String s) {
+                  cb(s);
+                },
+              ),
+            ),
+            FloatingActionButton.small(
+              child: Icon(Icons.save),
+              onPressed: () {
+                cb(controller.text);
+              },
+            ),
+          ],
         ),
       ),
     );
