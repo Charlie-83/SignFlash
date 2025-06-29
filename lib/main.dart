@@ -152,6 +152,9 @@ class _MyHomePageState extends State<MyHomePage> {
                   onPressed: () async {
                     String word = words[index];
                     word = word.split(RegExp(r"/|\("))[0];
+                    word = word.trim();
+                    word.replaceAll(RegExp(r" "), "-");
+                    word.replaceAll(RegExp(r"'"), "");
                     final Uri url = Uri.parse(
                       "https://www.signbsl.com/sign/$word",
                     );
