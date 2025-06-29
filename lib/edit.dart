@@ -26,8 +26,7 @@ class EditPage extends StatelessWidget {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                SizedBox(
-                  width: 200,
+                Expanded(
                   child: TextField(
                     style: TextStyle(fontSize: 30),
                     controller: controller,
