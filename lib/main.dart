@@ -174,50 +174,66 @@ class _MyHomePageState extends State<MyHomePage> {
       }
     }
     return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-        children: <Widget>[
-          Text(
-            words.isNotEmpty ? words[index] : "",
-            style: TextStyle(fontSize: 40),
-          ),
-          Row(
+      child: Stack(
+        children: [
+          Column(
             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-            children: [
-              FloatingActionButton.large(
-                child: Icon(Icons.check),
-                onPressed: () {
-                  next(true);
-                },
+            children: <Widget>[
+              Text(
+                words.isNotEmpty ? words[index] : "",
+                style: TextStyle(fontSize: 40),
               ),
-              FloatingActionButton.large(
-                child: Icon(Icons.close),
-                onPressed: () {
-                  next(false);
-                },
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: [
+                  FloatingActionButton.large(
+                    child: Icon(Icons.check),
+                    onPressed: () {
+                      next(true);
+                    },
+                  ),
+                  FloatingActionButton.large(
+                    child: Icon(Icons.close),
+                    onPressed: () {
+                      next(false);
+                    },
+                  ),
+                  FloatingActionButton.large(
+                    child: Icon(Icons.language),
+                    onPressed: () async {
+                      String word = words[index];
+                      word = word.split(RegExp(r"/|\("))[0];
+                      word = word.trim();
+                      word.replaceAll(RegExp(r" "), "-");
+                      word.replaceAll(RegExp(r"'"), "");
+                      final Uri url = Uri.parse(
+                        "https://www.signbsl.com/sign/$word",
+                      );
+                      await launchUrl(
+                        url,
+                        mode: LaunchMode.externalNonBrowserApplication,
+                      );
+                    },
+                  ),
+                ],
               ),
-              FloatingActionButton.large(
-                child: Icon(Icons.language),
-                onPressed: () async {
-                  String word = words[index];
-                  word = word.split(RegExp(r"/|\("))[0];
-                  word = word.trim();
-                  word.replaceAll(RegExp(r" "), "-");
-                  word.replaceAll(RegExp(r"'"), "");
-                  final Uri url = Uri.parse(
-                    "https://www.signbsl.com/sign/$word",
-                  );
-                  await launchUrl(
-                    url,
-                    mode: LaunchMode.externalNonBrowserApplication,
-                  );
-                },
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: successIcons,
               ),
             ],
           ),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: successIcons,
+          Positioned(
+            top: 10,
+            right: 10,
+            child: FloatingActionButton(
+              child: Icon(Icons.edit),
+              onPressed: () {
+                setState(() {
+                  page = Pages.edit;
+                });
+              },
+            ),
           ),
         ],
       ),
