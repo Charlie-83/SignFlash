@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'dart:io';
 import 'dart:math';
 
+import 'package:bslflash/edit.dart';
 import 'package:bslflash/list.dart';
 import 'package:flutter/material.dart';
 import 'package:path/path.dart' as p;
@@ -36,7 +37,7 @@ class MyHomePage extends StatefulWidget {
   State<MyHomePage> createState() => _MyHomePageState();
 }
 
-enum Pages { test, list }
+enum Pages { test, list, edit }
 
 class _MyHomePageState extends State<MyHomePage> {
   List<String> words = [];
@@ -78,6 +79,8 @@ class _MyHomePageState extends State<MyHomePage> {
   void saveState() async {
     File stateFile = File('/storage/emulated/0/Documents/bslflash_state.json');
     stateFile.writeAsStringSync(jsonEncode(map));
+    File file = File('/storage/emulated/0/Download/bslflash.txt');
+    file.writeAsStringSync("${words.join("\n")}\n");
   }
 
   @override
@@ -116,12 +119,38 @@ class _MyHomePageState extends State<MyHomePage> {
 
   @override
   Widget build(BuildContext context) {
+    Widget pageWidget;
+    switch (page) {
+      case (Pages.test):
+        pageWidget = testPage;
+        break;
+      case (Pages.list):
+        pageWidget = WordListPage(
+          words: words,
+          setEdit: (int i) {
+            setState(() {
+              index = i;
+              page = Pages.edit;
+            });
+          },
+        );
+        break;
+      case (Pages.edit):
+        pageWidget = EditPage(
+          word: words[index],
+          cb: (String s) {
+            updateWord(s);
+          },
+        );
+        break;
+    }
+
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Theme.of(context).colorScheme.inversePrimary,
         title: Text(widget.title),
       ),
-      body: page == Pages.test ? testPage : WordListPage(words: words),
+      body: pageWidget,
       floatingActionButton: FloatingActionButton(
         child: Icon(page == Pages.test ? Icons.list : Icons.lightbulb),
         onPressed: () {
@@ -193,5 +222,20 @@ class _MyHomePageState extends State<MyHomePage> {
         ],
       ),
     );
+  }
+
+  void updateWord(String s) {
+    setState(() {
+      final oldWord = words[index];
+      if (oldWord == s) {
+        return;
+      }
+      words[index] = s;
+      if (map.containsKey(oldWord)) {
+        map[s] = map[oldWord]!;
+        map.remove(oldWord);
+      }
+    });
+    saveState();
   }
 }
