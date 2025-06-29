@@ -237,7 +237,9 @@ class _MyHomePageState extends State<MyHomePage> {
               child: Icon(Icons.edit),
               onPressed: () {
                 setState(() {
-                  page = Pages.edit;
+                  if (words.isNotEmpty) {
+                    page = Pages.edit;
+                  }
                 });
               },
             ),
@@ -266,6 +268,8 @@ class _MyHomePageState extends State<MyHomePage> {
       if (map.containsKey(oldWord)) {
         map[s] = map[oldWord]!;
         map.remove(oldWord);
+      } else {
+        map[s] = [];
       }
     });
     saveState();
