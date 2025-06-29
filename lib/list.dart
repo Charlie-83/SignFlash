@@ -8,6 +8,16 @@ class WordListPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     List<Widget> items = [];
+    items.add(
+      Center(
+        child: FloatingActionButton.small(
+          child: Icon(Icons.add),
+          onPressed: () {
+            setEdit(-1);
+          },
+        ),
+      ),
+    );
     for (int i = 0; i < words.length; ++i) {
       final String w = words[i];
       items.add(

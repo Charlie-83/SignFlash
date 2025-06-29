@@ -132,6 +132,10 @@ class _MyHomePageState extends State<MyHomePage> {
           words: words,
           setEdit: (int i) {
             setState(() {
+              if (i == -1) {
+                words.add("");
+                i = words.length - 1;
+              }
               index = i;
               page = Pages.edit;
             });
@@ -245,6 +249,15 @@ class _MyHomePageState extends State<MyHomePage> {
 
   void updateWord(String s) {
     setState(() {
+      page = Pages.test;
+      if (s.isEmpty) {
+        map.remove(words[index]);
+        words.removeAt(index);
+        if (index == words.length) {
+          index = words.length - 1;
+        }
+        return;
+      }
       final oldWord = words[index];
       if (oldWord == s) {
         return;

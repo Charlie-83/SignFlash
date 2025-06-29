@@ -19,9 +19,6 @@ class EditPage extends StatelessWidget {
               child: TextField(
                 style: TextStyle(fontSize: 30),
                 controller: controller,
-                onChanged: (String s) {
-                  cb(s);
-                },
               ),
             ),
             FloatingActionButton.small(
