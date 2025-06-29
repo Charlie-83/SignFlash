@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'dart:io';
 import 'dart:math';
 
+import 'package:bslflash/list.dart';
 import 'package:flutter/material.dart';
 import 'package:path/path.dart' as p;
 import 'package:url_launcher/url_launcher.dart';
@@ -35,10 +36,13 @@ class MyHomePage extends StatefulWidget {
   State<MyHomePage> createState() => _MyHomePageState();
 }
 
+enum Pages { test, list }
+
 class _MyHomePageState extends State<MyHomePage> {
   List<String> words = [];
   Map<String, List<bool>> map = HashMap();
   int index = 0;
+  Pages page = Pages.test;
 
   Future<void> asyncInitState() async {
     final dir = Directory('/storage/emulated/0/Download');
@@ -112,66 +116,81 @@ class _MyHomePageState extends State<MyHomePage> {
 
   @override
   Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
+        title: Text(widget.title),
+      ),
+      body: page == Pages.test ? testPage : WordListPage(words: words),
+      floatingActionButton: FloatingActionButton(
+        child: Icon(page == Pages.test ? Icons.list : Icons.lightbulb),
+        onPressed: () {
+          setState(() {
+            if (page == Pages.test) {
+              page = Pages.list;
+            } else {
+              page = Pages.test;
+            }
+          });
+        },
+      ),
+    );
+  }
+
+  Widget get testPage {
     List<Widget> successIcons = [];
     if (words.isNotEmpty) {
       for (final s in map[words[index]] ?? []) {
         successIcons.add(Icon(s ? Icons.check : Icons.close));
       }
     }
-
-    return Scaffold(
-      appBar: AppBar(
-        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
-        title: Text(widget.title),
-      ),
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-          children: <Widget>[
-            Text(
-              words.isNotEmpty ? words[index] : "",
-              style: TextStyle(fontSize: 40),
-            ),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              children: [
-                FloatingActionButton.large(
-                  child: Icon(Icons.check),
-                  onPressed: () {
-                    next(true);
-                  },
-                ),
-                FloatingActionButton.large(
-                  child: Icon(Icons.close),
-                  onPressed: () {
-                    next(false);
-                  },
-                ),
-                FloatingActionButton.large(
-                  child: Icon(Icons.language),
-                  onPressed: () async {
-                    String word = words[index];
-                    word = word.split(RegExp(r"/|\("))[0];
-                    word = word.trim();
-                    word.replaceAll(RegExp(r" "), "-");
-                    word.replaceAll(RegExp(r"'"), "");
-                    final Uri url = Uri.parse(
-                      "https://www.signbsl.com/sign/$word",
-                    );
-                    await launchUrl(
-                      url,
-                      mode: LaunchMode.externalNonBrowserApplication,
-                    );
-                  },
-                ),
-              ],
-            ),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: successIcons,
-            ),
-          ],
-        ),
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+        children: <Widget>[
+          Text(
+            words.isNotEmpty ? words[index] : "",
+            style: TextStyle(fontSize: 40),
+          ),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            children: [
+              FloatingActionButton.large(
+                child: Icon(Icons.check),
+                onPressed: () {
+                  next(true);
+                },
+              ),
+              FloatingActionButton.large(
+                child: Icon(Icons.close),
+                onPressed: () {
+                  next(false);
+                },
+              ),
+              FloatingActionButton.large(
+                child: Icon(Icons.language),
+                onPressed: () async {
+                  String word = words[index];
+                  word = word.split(RegExp(r"/|\("))[0];
+                  word = word.trim();
+                  word.replaceAll(RegExp(r" "), "-");
+                  word.replaceAll(RegExp(r"'"), "");
+                  final Uri url = Uri.parse(
+                    "https://www.signbsl.com/sign/$word",
+                  );
+                  await launchUrl(
+                    url,
+                    mode: LaunchMode.externalNonBrowserApplication,
+                  );
+                },
+              ),
+            ],
+          ),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: successIcons,
+          ),
+        ],
       ),
     );
   }
