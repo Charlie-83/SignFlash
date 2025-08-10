@@ -1,12 +1,29 @@
+import 'package:bslflash/database.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
 class EditPage extends StatelessWidget {
-  final String word;
-  final void Function(String) cb;
-  const EditPage({super.key, required this.word, required this.cb});
+  final int? id;
+  final void Function() done;
+  const EditPage({super.key, required this.id, required this.done});
 
   @override
   Widget build(BuildContext context) {
+    if (id != null) {
+      return FutureBuilder(
+        future: context.watch<Database>().word(id!),
+        builder: (BuildContext context, AsyncSnapshot<String?> word) {
+          if (!word.hasData) {
+            return Text("");
+          }
+          return interface(context, word.data!);
+        },
+      );
+    }
+    return interface(context, "");
+  }
+
+  Widget interface(BuildContext context, String word) {
     final controller = TextEditingController(text: word);
     return Stack(
       children: [
@@ -16,7 +33,7 @@ class EditPage extends StatelessWidget {
           child: FloatingActionButton.small(
             child: Icon(Icons.delete),
             onPressed: () {
-              cb("");
+              done();
             },
           ),
         ),
@@ -34,8 +51,12 @@ class EditPage extends StatelessWidget {
                 ),
                 FloatingActionButton.small(
                   child: Icon(Icons.save),
-                  onPressed: () {
-                    cb(controller.text);
+                  onPressed: () async {
+                    context.read<Database>().updateOrAddWord(
+                      id,
+                      controller.text,
+                    );
+                    done();
                   },
                 ),
               ],

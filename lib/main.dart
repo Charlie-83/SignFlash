@@ -1,152 +1,84 @@
-import 'dart:collection';
-import 'dart:convert';
-import 'dart:io';
 import 'dart:math';
 
+import 'package:bslflash/database.dart';
 import 'package:bslflash/edit.dart';
 import 'package:bslflash/list.dart';
+import 'package:bslflash/test.dart';
 import 'package:flutter/material.dart';
-import 'package:path/path.dart' as p;
-import 'package:url_launcher/url_launcher.dart';
+import 'package:provider/provider.dart';
 
 void main() {
-  runApp(const MyApp());
+  runApp(ChangeNotifierProvider(create: (context) => Database(), child: App()));
 }
 
-class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+class App extends StatelessWidget {
+  const App({super.key});
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Flutter Demo',
+      title: "BSLFlash",
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(
           brightness: Brightness.dark,
           seedColor: Colors.deepPurple,
         ),
       ),
-      home: const MyHomePage(title: 'BSLFlash'),
+      home: const HomePage(title: 'BSLFlash'),
     );
   }
 }
 
-class MyHomePage extends StatefulWidget {
-  const MyHomePage({super.key, required this.title});
-
+class HomePage extends StatefulWidget {
   final String title;
 
+  const HomePage({super.key, required this.title});
+
   @override
-  State<MyHomePage> createState() => _MyHomePageState();
+  State<HomePage> createState() => _HomePageState();
 }
 
 enum Pages { test, list, edit }
 
-class _MyHomePageState extends State<MyHomePage> {
-  List<String> words = [];
-  Map<String, List<bool>> map = HashMap();
-  int index = 0;
+class _HomePageState extends State<HomePage> {
+  int testId = 1;
+  int? editId;
   Pages page = Pages.test;
-
-  Future<void> asyncInitState() async {
-    final dir = Directory('/storage/emulated/0/Download');
-    File file = File(p.join(dir.path, "bslflash.txt"));
-    if (!(await file.exists())) {
-      await file.create();
-    }
-    setState(() {
-      words = file.readAsLinesSync();
-      index = Random().nextInt(words.length);
-    });
-
-    File stateFile = File('/storage/emulated/0/Documents/bslflash_state.json');
-    if (!(await stateFile.exists())) {
-      await stateFile.create();
-    } else {
-      Map<String, dynamic> m = jsonDecode(stateFile.readAsStringSync());
-      setState(() {
-        map = m.map((key, value) => MapEntry(key, List<bool>.from(value)));
-      });
-    }
-
-    setState(() {
-      for (String w in words) {
-        if (!map.containsKey(w)) {
-          map[w] = [];
-        }
-      }
-    });
-    saveState();
-  }
-
-  void saveState() async {
-    File stateFile = File('/storage/emulated/0/Documents/bslflash_state.json');
-    stateFile.writeAsStringSync(jsonEncode(map));
-    File file = File('/storage/emulated/0/Download/bslflash.txt');
-    file.writeAsStringSync("${words.join("\n")}\n");
-  }
-
-  @override
-  void initState() {
-    super.initState();
-    asyncInitState();
-  }
-
-  void next(bool correct) {
-    setState(() {
-      final word = words[index];
-      map[word]!.add(correct);
-      if (map[word]!.length == 6) {
-        map[word]!.removeAt(0);
-      }
-      saveState();
-
-      final padded = map.values.map(
-        (l) => l + List.filled(5 - l.length, false),
-      );
-
-      int totalWeight =
-          padded.expand((l) => l).where((v) => !v).length + map.length;
-      int v = Random().nextInt(totalWeight);
-      for (int i = 0; i < words.length; i++) {
-        var successes = map[words[i]]!;
-        successes = successes + List.filled(5 - successes.length, false);
-        v -= successes.where((v) => !v).length + 1;
-        if (v <= 0) {
-          index = i;
-          return;
-        }
-      }
-    });
-  }
 
   @override
   Widget build(BuildContext context) {
     Widget pageWidget;
     switch (page) {
       case (Pages.test):
-        pageWidget = testPage;
+        pageWidget = TestPage(
+          id: testId,
+          answer: (bool success) {
+            next(context, success);
+          },
+          edit: () {
+            setState(() {
+              page = Pages.edit;
+            });
+          },
+        );
         break;
       case (Pages.list):
         pageWidget = WordListPage(
-          words: words,
-          setEdit: (int i) {
+          setEdit: (int? id) {
             setState(() {
-              if (i == -1) {
-                words.add("");
-                i = words.length - 1;
-              }
-              index = i;
               page = Pages.edit;
+              editId = id;
             });
           },
         );
         break;
       case (Pages.edit):
         pageWidget = EditPage(
-          word: words[index],
-          cb: (String s) {
-            updateWord(s);
+          id: editId,
+          done: () {
+            setState(() {
+              page = Pages.list;
+            });
           },
         );
         break;
@@ -160,118 +92,64 @@ class _MyHomePageState extends State<MyHomePage> {
       body: pageWidget,
       floatingActionButton: FloatingActionButton(
         child: Icon(page == Pages.test ? Icons.list : Icons.lightbulb),
-        onPressed: () {
-          setState(() {
-            if (page == Pages.test) {
-              page = Pages.list;
-            } else {
-              page = Pages.test;
-            }
-          });
-        },
+        onPressed: () => setState(() {
+          if (page == Pages.test) {
+            page = Pages.list;
+          } else {
+            page = Pages.test;
+          }
+        }),
+      ),
+      drawer: Drawer(
+        child: ListView(
+          children: <Widget>[
+            ListTile(
+              leading: const Icon(Icons.restore),
+              title: const Text("Reset Database"),
+              onTap: () => context.read<Database>().reset(),
+            ),
+          ],
+        ),
       ),
     );
   }
 
-  Widget get testPage {
-    List<Widget> successIcons = [];
-    if (words.isNotEmpty) {
-      for (final s in map[words[index]] ?? []) {
-        successIcons.add(Icon(s ? Icons.check : Icons.close));
+  void next(BuildContext context, bool correct) async {
+    var db = context.read<Database>();
+    db.newAttempt(testId, correct);
+    final attempts = await db.allAttempts();
+    final sum = attempts.entries.fold(
+      0,
+      (count, entry) =>
+          count +
+          max(
+            1,
+            entry.value
+                .sublist(entry.value.length - min(5, entry.value.length))
+                .fold(
+                  5 - min(5, entry.value.length),
+                  (entryCount, b) => entryCount + (!b ? 1 : 0),
+                ),
+          ),
+    );
+    int nextCount = (Random().nextDouble() * sum).toInt();
+    int count = 0;
+    for (final entry in attempts.entries) {
+      count += max(
+        1,
+        entry.value
+            .sublist(entry.value.length - min(5, entry.value.length))
+            .fold(
+              5 - min(5, entry.value.length),
+              (entryCount, b) => entryCount + (!b ? 1 : 0),
+            ),
+      );
+      if (count >= nextCount) {
+        setState(() {
+          testId = entry.key;
+        });
+        return;
       }
     }
-    return Center(
-      child: Stack(
-        children: [
-          Column(
-            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-            children: <Widget>[
-              Text(
-                words.isNotEmpty ? words[index] : "",
-                style: TextStyle(fontSize: 40),
-              ),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                children: [
-                  FloatingActionButton.large(
-                    child: Icon(Icons.check),
-                    onPressed: () {
-                      next(true);
-                    },
-                  ),
-                  FloatingActionButton.large(
-                    child: Icon(Icons.close),
-                    onPressed: () {
-                      next(false);
-                    },
-                  ),
-                  FloatingActionButton.large(
-                    child: Icon(Icons.language),
-                    onPressed: () async {
-                      String word = words[index];
-                      word = word.split(RegExp(r"/|\("))[0];
-                      word = word.trim();
-                      word.replaceAll(RegExp(r" "), "-");
-                      word.replaceAll(RegExp(r"'"), "");
-                      final Uri url = Uri.parse(
-                        "https://www.signbsl.com/sign/$word",
-                      );
-                      await launchUrl(
-                        url,
-                        mode: LaunchMode.externalNonBrowserApplication,
-                      );
-                    },
-                  ),
-                ],
-              ),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: successIcons,
-              ),
-            ],
-          ),
-          Positioned(
-            top: 10,
-            right: 10,
-            child: FloatingActionButton(
-              child: Icon(Icons.edit),
-              onPressed: () {
-                setState(() {
-                  if (words.isNotEmpty) {
-                    page = Pages.edit;
-                  }
-                });
-              },
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  void updateWord(String s) {
-    setState(() {
-      page = Pages.test;
-      if (s.isEmpty) {
-        map.remove(words[index]);
-        words.removeAt(index);
-        if (index == words.length) {
-          index = words.length - 1;
-        }
-        return;
-      }
-      final oldWord = words[index];
-      if (oldWord == s) {
-        return;
-      }
-      words[index] = s;
-      if (map.containsKey(oldWord)) {
-        map[s] = map[oldWord]!;
-        map.remove(oldWord);
-      } else {
-        map[s] = [];
-      }
-    });
-    saveState();
   }
 }
