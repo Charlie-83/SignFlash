@@ -43,12 +43,12 @@ class Database with ChangeNotifier {
     return out;
   }
 
-  Future<void> export(Directory dir) async {
+  Future<void> export(String dir) async {
     var db = await db_;
-    String filePath = "${dir.path}/bslflash_export.txt";
+    String filePath = "$dir/bslflash_export.txt";
     int counter = 1;
     while (File(filePath).existsSync()) {
-      filePath = "${dir.path}/bslflash_export_$counter.txt";
+      filePath = "$dir/bslflash_export_$counter.txt";
       counter++;
     }
     final queryResult = await db.query("Vocab", columns: ["word"]);

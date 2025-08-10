@@ -1,10 +1,13 @@
 import 'dart:math';
 
+import 'dart:io';
+
 import 'package:bslflash/database.dart';
 import 'package:bslflash/edit.dart';
 import 'package:bslflash/list.dart';
 import 'package:bslflash/test.dart';
 import 'package:flutter/material.dart';
+import 'package:file_picker/file_picker.dart';
 import 'package:provider/provider.dart';
 
 void main() {
@@ -85,6 +88,7 @@ class _HomePageState extends State<HomePage> {
         break;
     }
 
+    final db = context.read<Database>();
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Theme.of(context).colorScheme.inversePrimary,
@@ -108,6 +112,26 @@ class _HomePageState extends State<HomePage> {
               leading: const Icon(Icons.restore),
               title: const Text("Reset Database"),
               onTap: () => context.read<Database>().reset(),
+            ),
+            ListTile(
+              leading: const Icon(Icons.file_download),
+              title: const Text("Export Data"),
+              onTap: () async {
+                String? dir = await FilePicker.platform.getDirectoryPath();
+                if (dir != null) {
+                  db.export(dir);
+                }
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.file_download),
+              title: const Text("Import Data"),
+              onTap: () async {
+                FilePickerResult? file = await FilePicker.platform.pickFiles();
+                if (file != null && file.files[0].path != null) {
+                  db.import(File(file.files[0].path!));
+                }
+              },
             ),
           ],
         ),
