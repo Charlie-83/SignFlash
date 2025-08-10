@@ -58,6 +58,7 @@ class _HomePageState extends State<HomePage> {
           edit: () {
             setState(() {
               page = Pages.edit;
+              editId = testId;
             });
           },
         );

@@ -142,4 +142,9 @@ class Database with ChangeNotifier {
     db.delete("Vocab");
     notifyListeners();
   }
+
+  Future<void> deleteRow(int id) async {
+    var db = await db_;
+    db.delete("Vocab", where: "id = ?", whereArgs: [id]);
+  }
 }
