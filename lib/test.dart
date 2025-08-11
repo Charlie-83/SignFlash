@@ -1,6 +1,7 @@
 import 'dart:math';
 
 import 'package:bslflash/database.dart';
+import 'package:bslflash/settings.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -18,6 +19,16 @@ class TestPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final language = context.watch<Settings>().language;
+    late String urlString;
+    switch (language) {
+      case (Language.bsl):
+        urlString = "www.signbsl.com";
+        break;
+      case (Language.asl):
+        urlString = "www.signasl.org";
+        break;
+    }
     return FutureBuilder(
       future: context.watch<Database>().wordAndAttempts(id),
       builder:
@@ -86,7 +97,7 @@ class TestPage extends StatelessWidget {
                                 "",
                               );
                               final Uri url = Uri.parse(
-                                "https://www.signbsl.com/sign/$wordString",
+                                "https://$urlString/sign/$wordString",
                               );
                               await launchUrl(
                                 url,

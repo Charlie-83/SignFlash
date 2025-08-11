@@ -1,17 +1,17 @@
-import 'dart:math';
-
 import 'dart:io';
+import 'dart:math';
 
 import 'package:bslflash/database.dart';
 import 'package:bslflash/edit.dart';
 import 'package:bslflash/list.dart';
+import 'package:bslflash/settings.dart';
 import 'package:bslflash/test.dart';
-import 'package:flutter/material.dart';
 import 'package:file_picker/file_picker.dart';
+import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 void main() {
-  runApp(ChangeNotifierProvider(create: (context) => Database(), child: App()));
+  runApp(App());
 }
 
 class App extends StatelessWidget {
@@ -27,8 +27,12 @@ class App extends StatelessWidget {
           seedColor: Colors.deepPurple,
         ),
       ),
-      home: ChangeNotifierProvider(
-        create: (context) => TestIDModel(),
+      home: MultiProvider(
+        providers: [
+          ChangeNotifierProvider(create: (_) => Database()),
+          ChangeNotifierProvider(create: (_) => TestIDModel()),
+          ChangeNotifierProvider(create: (_) => Settings()),
+        ],
         child: const HomePage(title: 'BSLFlash'),
       ),
     );
@@ -44,6 +48,8 @@ class HomePage extends StatefulWidget {
   State<HomePage> createState() => _HomePageState();
 }
 
+enum Pages { test, list, edit, settings }
+
 class TestIDModel with ChangeNotifier {
   int testId = 1;
   void update(int id) {
@@ -51,8 +57,6 @@ class TestIDModel with ChangeNotifier {
     notifyListeners();
   }
 }
-
-enum Pages { test, list, edit }
 
 class _HomePageState extends State<HomePage> {
   int? editId;
@@ -98,6 +102,9 @@ class _HomePageState extends State<HomePage> {
             });
           },
         );
+        break;
+      case (Pages.settings):
+        pageWidget = SettingsPage();
         break;
     }
 
@@ -166,6 +173,15 @@ class _HomePageState extends State<HomePage> {
                 if (file != null && file.files[0].path != null) {
                   db.import(File(file.files[0].path!));
                 }
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.settings),
+              title: const Text("Settings"),
+              onTap: () async {
+                setState(() {
+                  page = Pages.settings;
+                });
               },
             ),
           ],
