@@ -25,7 +25,7 @@ class TestPage extends StatelessWidget {
             BuildContext context,
             AsyncSnapshot<MapEntry<String, List<bool>>?> word,
           ) {
-            if (!word.hasData) {
+            if (!word.hasData && word.connectionState == ConnectionState.done) {
               return Container(
                 padding: EdgeInsets.all(20),
                 alignment: Alignment.center,
@@ -36,22 +36,25 @@ class TestPage extends StatelessWidget {
               );
             }
             List<Widget> successIcons = [];
-            final v = word.data!.value;
-            for (final s in v.sublist(v.length - min(5, v.length))) {
-              successIcons.add(
-                Icon(
-                  s ? Icons.check : Icons.close,
-                  color: s ? Colors.green : Colors.red,
-                ),
-              );
+            if (word.hasData) {
+              final v = word.data!.value;
+              for (final s in v.sublist(v.length - min(5, v.length))) {
+                successIcons.add(
+                  Icon(
+                    s ? Icons.check : Icons.close,
+                    color: s ? Colors.green : Colors.red,
+                  ),
+                );
+              }
             }
+            String wordString = word.hasData ? word.data!.key : "";
             return Center(
               child: Stack(
                 children: [
                   Column(
                     mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                     children: <Widget>[
-                      Text(word.data!.key, style: TextStyle(fontSize: 40)),
+                      Text(wordString, style: TextStyle(fontSize: 40)),
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                         children: [
@@ -72,13 +75,18 @@ class TestPage extends StatelessWidget {
                           FloatingActionButton.large(
                             child: Icon(Icons.language),
                             onPressed: () async {
-                              String w = word.data!.key;
-                              w = w.split(RegExp(r"/|\("))[0];
-                              w = w.trim();
-                              w = w.replaceAll(RegExp(r" "), "-");
-                              w = w.replaceAll(RegExp(r"'"), "");
+                              wordString = wordString.split(RegExp(r"/|\("))[0];
+                              wordString = wordString.trim();
+                              wordString = wordString.replaceAll(
+                                RegExp(r" "),
+                                "-",
+                              );
+                              wordString = wordString.replaceAll(
+                                RegExp(r"'"),
+                                "",
+                              );
                               final Uri url = Uri.parse(
-                                "https://www.signbsl.com/sign/$w",
+                                "https://www.signbsl.com/sign/$wordString",
                               );
                               await launchUrl(
                                 url,
@@ -88,9 +96,12 @@ class TestPage extends StatelessWidget {
                           ),
                         ],
                       ),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: successIcons,
+                      SizedBox(
+                        height: 50,
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: successIcons,
+                        ),
                       ),
                     ],
                   ),
