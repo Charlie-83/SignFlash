@@ -111,7 +111,28 @@ class _HomePageState extends State<HomePage> {
             ListTile(
               leading: const Icon(Icons.restore),
               title: const Text("Reset Database"),
-              onTap: () => context.read<Database>().reset(),
+              onTap: () => showDialog(
+                context: context,
+                builder: (BuildContext context) => AlertDialog(
+                  title: const Text("Reset Database"),
+                  content: const Text(
+                    "Are you sure you want to delete all words in the database?",
+                  ),
+                  actions: <Widget>[
+                    TextButton(
+                      child: const Text("Yes"),
+                      onPressed: () {
+                        context.read<Database>().reset();
+                        Navigator.of(context).pop();
+                      },
+                    ),
+                    TextButton(
+                      child: const Text("No"),
+                      onPressed: () => Navigator.of(context).pop(),
+                    ),
+                  ],
+                ),
+              ),
             ),
             ListTile(
               leading: const Icon(Icons.file_download),
