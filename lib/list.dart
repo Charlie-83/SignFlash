@@ -1,4 +1,6 @@
 import 'package:bslflash/database.dart';
+import 'package:bslflash/util.dart';
+import 'package:pie_chart/pie_chart.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter/material.dart';
 
@@ -20,9 +22,12 @@ class WordListPageState extends State<WordListPage> {
   Widget build(BuildContext context) {
     var db = context.watch<Database>();
     return FutureBuilder(
-      future: db.words(),
+      future: db.allWordAndAttempts(),
       builder:
-          (BuildContext context, AsyncSnapshot<Map<int, String>> wordsAsync) {
+          (
+            BuildContext context,
+            AsyncSnapshot<Map<int, MapEntry<String, List<bool>>>> wordsAsync,
+          ) {
             if (!wordsAsync.hasData) {
               return Container();
             }
@@ -53,14 +58,31 @@ class WordListPageState extends State<WordListPage> {
             );
 
             for (int id in words.keys) {
-              final String w = words[id]!;
+              final String w = words[id]!.key;
               if (search == "" ||
                   search.toLowerCase().allMatches(w.toLowerCase()).isNotEmpty) {
+                double correct = countListBool(words[id]!.value).toDouble();
                 items.add(
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     spacing: 20,
                     children: [
+                      PieChart(
+                        chartType: ChartType.ring,
+                        ringStrokeWidth: 10,
+                        animationDuration: Duration.zero,
+                        dataMap: {
+                          "correct": correct,
+                          "incorrect": words[id]!.value.length - correct,
+                        },
+                        colorList: [Colors.green, Colors.red],
+                        chartRadius: 25,
+                        legendOptions: LegendOptions(showLegends: false),
+                        chartValuesOptions: ChartValuesOptions(
+                          showChartValues: false,
+                        ),
+                        degreeOptions: DegreeOptions(initialAngle: -90),
+                      ),
                       Expanded(child: Text(w, style: TextStyle(fontSize: 30))),
                       FloatingActionButton.small(
                         child: Icon(Icons.edit),

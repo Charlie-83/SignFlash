@@ -147,4 +147,44 @@ class Database with ChangeNotifier {
     var db = await db_;
     db.delete("Vocab", where: "id = ?", whereArgs: [id]);
   }
+
+  Future<MapEntry<String, List<bool>>?> wordAndAttempts(int id) async {
+    var db = await db_;
+    final queryResult = await db.query(
+      "Vocab",
+      where: "id = ?",
+      whereArgs: [id],
+      columns: ["word", "attempts"],
+    );
+    if (queryResult.length != 1) {
+      return null;
+    }
+    return MapEntry(
+      queryResult[0]["word"].toString(),
+      queryResult[0]["attempts"]
+          .toString()
+          .split("")
+          .map((c) => c == "1")
+          .toList(),
+    );
+  }
+
+  Future<Map<int, MapEntry<String, List<bool>>>> allWordAndAttempts() async {
+    var db = await db_;
+    final queryResult = await db.query(
+      "Vocab",
+      columns: ["id", "word", "attempts"],
+    );
+    Map<int, MapEntry<String, List<bool>>> out = queryResult.fold({}, (
+      map,
+      row,
+    ) {
+      map[row["id"] as int] = MapEntry(
+        row["word"].toString(),
+        row["attempts"].toString().split("").map((c) => c == "1").toList(),
+      );
+      return map;
+    });
+    return out;
+  }
 }

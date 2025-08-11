@@ -19,7 +19,7 @@ class TestPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return FutureBuilder(
-      future: wordAndAttempts(context, id),
+      future: context.watch<Database>().wordAndAttempts(id),
       builder:
           (
             BuildContext context,
@@ -107,18 +107,5 @@ class TestPage extends StatelessWidget {
             );
           },
     );
-  }
-
-  Future<MapEntry<String, List<bool>>?> wordAndAttempts(
-    BuildContext context,
-    int id,
-  ) async {
-    final db = context.watch<Database>();
-    String? word = await db.word(id);
-    if (word == null) {
-      return null;
-    }
-    List<bool> attempts = await db.attempts(id);
-    return MapEntry(word, attempts);
   }
 }

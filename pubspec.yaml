@@ -16,6 +16,7 @@ dependencies:
   sqflite: ^2.4.2
   file_picker: ^10.2.4
   provider: ^6.1.5
+  pie_chart: ^5.4.0
 
 dev_dependencies:
   flutter_test:
