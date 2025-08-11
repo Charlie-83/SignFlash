@@ -56,14 +56,14 @@ class TestPage extends StatelessWidget {
                         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                         children: [
                           FloatingActionButton.large(
-                            backgroundColor: Colors.greenAccent,
+                            backgroundColor: Colors.green,
                             child: Icon(Icons.check, color: Colors.black54),
                             onPressed: () {
                               answer(true);
                             },
                           ),
                           FloatingActionButton.large(
-                            backgroundColor: Colors.redAccent,
+                            backgroundColor: Colors.red,
                             child: Icon(Icons.close, color: Colors.black54),
                             onPressed: () {
                               answer(false);

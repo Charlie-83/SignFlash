@@ -27,7 +27,10 @@ class App extends StatelessWidget {
           seedColor: Colors.deepPurple,
         ),
       ),
-      home: const HomePage(title: 'BSLFlash'),
+      home: ChangeNotifierProvider(
+        create: (context) => TestIDModel(),
+        child: const HomePage(title: 'BSLFlash'),
+      ),
     );
   }
 }
@@ -41,10 +44,17 @@ class HomePage extends StatefulWidget {
   State<HomePage> createState() => _HomePageState();
 }
 
+class TestIDModel with ChangeNotifier {
+  int testId = 1;
+  void update(int id) {
+    testId = id;
+    notifyListeners();
+  }
+}
+
 enum Pages { test, list, edit }
 
 class _HomePageState extends State<HomePage> {
-  int testId = 1;
   int? editId;
   Pages page = Pages.test;
 
@@ -53,17 +63,20 @@ class _HomePageState extends State<HomePage> {
     Widget pageWidget;
     switch (page) {
       case (Pages.test):
-        pageWidget = TestPage(
-          id: testId,
-          answer: (bool success) {
-            next(context, success);
-          },
-          edit: () {
-            setState(() {
-              page = Pages.edit;
-              editId = testId;
-            });
-          },
+        pageWidget = ChangeNotifierProvider(
+          create: (context) => TestIDModel(),
+          child: TestPage(
+            id: context.watch<TestIDModel>().testId,
+            answer: (bool success) {
+              next(context, success);
+            },
+            edit: () {
+              setState(() {
+                page = Pages.edit;
+                editId = context.read<TestIDModel>().testId;
+              });
+            },
+          ),
         );
         break;
       case (Pages.list):
@@ -106,6 +119,7 @@ class _HomePageState extends State<HomePage> {
         }),
       ),
       drawer: Drawer(
+        width: MediaQuery.sizeOf(context).width * 0.8,
         child: ListView(
           children: <Widget>[
             ListTile(
@@ -162,7 +176,7 @@ class _HomePageState extends State<HomePage> {
 
   void next(BuildContext context, bool correct) async {
     var db = context.read<Database>();
-    db.newAttempt(testId, correct);
+    db.newAttempt(context.read<TestIDModel>().testId, correct);
     final attempts = await db.allAttempts();
     final sum = attempts.entries.fold(
       0,
@@ -192,7 +206,7 @@ class _HomePageState extends State<HomePage> {
       );
       if (count >= nextCount) {
         setState(() {
-          testId = entry.key;
+          context.read<TestIDModel>().update(entry.key);
         });
         return;
       }

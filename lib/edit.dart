@@ -1,4 +1,5 @@
 import 'package:bslflash/database.dart';
+import 'package:bslflash/main.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -26,6 +27,7 @@ class EditPage extends StatelessWidget {
   Widget interface(BuildContext context, String word) {
     final controller = TextEditingController(text: word);
     final db = context.read<Database>();
+    final testIdModel = context.read<TestIDModel>();
     return Stack(
       children: [
         id != null
@@ -58,6 +60,10 @@ class EditPage extends StatelessWidget {
                     );
                     if (confirm != null && confirm) {
                       db.deleteRow(id!);
+                      final words = await db.words();
+                      if (words.isNotEmpty) {
+                        testIdModel.update(words.entries.toList()[0].key);
+                      }
                       done();
                     }
                   },
