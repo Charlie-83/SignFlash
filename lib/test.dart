@@ -19,16 +19,7 @@ class TestPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final language = context.watch<Settings>().language;
-    late String urlString;
-    switch (language) {
-      case (Language.bsl):
-        urlString = "www.signbsl.com";
-        break;
-      case (Language.asl):
-        urlString = "www.signasl.org";
-        break;
-    }
+    final settings = context.watch<Settings>();
     return FutureBuilder(
       future: context.watch<Database>().wordAndAttempts(id),
       builder:
@@ -96,13 +87,21 @@ class TestPage extends StatelessWidget {
                                 RegExp(r"'"),
                                 "",
                               );
-                              final Uri url = Uri.parse(
-                                "https://$urlString/sign/$wordString",
-                              );
-                              await launchUrl(
-                                url,
-                                mode: LaunchMode.externalNonBrowserApplication,
-                              );
+                              late String urlString;
+                              switch (settings.language) {
+                                case (Language.bsl):
+                                  urlString = "https://www.signbsl.com/sign/*";
+                                  break;
+                                case (Language.asl):
+                                  urlString = "https://www.signasl.org/sign/*";
+                                  break;
+                                case (Language.custom):
+                                  urlString = settings.customUrl ?? "";
+                                  break;
+                              }
+                              urlString = urlString.replaceAll("*", wordString);
+                              final Uri url = Uri.parse(urlString);
+                              await launchUrl(url);
                             },
                           ),
                         ],
