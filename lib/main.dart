@@ -1,11 +1,11 @@
 import 'dart:io';
 import 'dart:math';
 
-import 'package:bslflash/database.dart';
-import 'package:bslflash/edit.dart';
-import 'package:bslflash/list.dart';
-import 'package:bslflash/settings.dart';
-import 'package:bslflash/test.dart';
+import 'package:signflash/database.dart';
+import 'package:signflash/edit.dart';
+import 'package:signflash/list.dart';
+import 'package:signflash/settings.dart';
+import 'package:signflash/test.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -20,7 +20,7 @@ class App extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: "BSLFlash",
+      title: "SignFlash",
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(
           brightness: Brightness.dark,
@@ -33,7 +33,7 @@ class App extends StatelessWidget {
           ChangeNotifierProvider(create: (_) => TestIDModel()),
           ChangeNotifierProvider(create: (_) => Settings()),
         ],
-        child: const HomePage(title: 'BSLFlash'),
+        child: const HomePage(title: 'SignFlash'),
       ),
     );
   }

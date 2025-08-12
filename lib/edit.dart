@@ -1,5 +1,5 @@
-import 'package:bslflash/database.dart';
-import 'package:bslflash/main.dart';
+import 'package:signflash/database.dart';
+import 'package:signflash/main.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 

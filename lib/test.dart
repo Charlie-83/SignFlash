@@ -1,7 +1,7 @@
 import 'dart:math';
 
-import 'package:bslflash/database.dart';
-import 'package:bslflash/settings.dart';
+import 'package:signflash/database.dart';
+import 'package:signflash/settings.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';

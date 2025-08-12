@@ -45,10 +45,10 @@ class Database with ChangeNotifier {
 
   Future<void> export(String dir) async {
     var db = await db_;
-    String filePath = "$dir/bslflash_export.txt";
+    String filePath = "$dir/signflash_export.txt";
     int counter = 1;
     while (File(filePath).existsSync()) {
-      filePath = "$dir/bslflash_export_$counter.txt";
+      filePath = "$dir/signflash_export_$counter.txt";
       counter++;
     }
     final queryResult = await db.query("Vocab", columns: ["word"]);
@@ -68,7 +68,7 @@ class Database with ChangeNotifier {
 
   Future<sql.Database> initalise() async {
     return await sql.openDatabase(
-      'bslflash.db',
+      'signflash.db',
       version: 1,
       onCreate: (sql.Database db, int version) async {
         await db.execute(

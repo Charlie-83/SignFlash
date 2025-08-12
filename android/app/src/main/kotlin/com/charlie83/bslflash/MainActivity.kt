@@ -1,4 +1,4 @@
-package com.example.bslflash
+package com.charlie83.signflash
 
 import io.flutter.embedding.android.FlutterActivity
 
