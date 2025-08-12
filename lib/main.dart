@@ -112,7 +112,7 @@ class _HomePageState extends State<HomePage> {
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Theme.of(context).colorScheme.inversePrimary,
-        title: Text(widget.title),
+        title: Text(pageName(page)),
       ),
       body: pageWidget,
       floatingActionButton: FloatingActionButton(
@@ -125,67 +125,66 @@ class _HomePageState extends State<HomePage> {
           }
         }),
       ),
-      drawer: Drawer(
-        width: MediaQuery.sizeOf(context).width * 0.8,
-        child: ListView(
-          children: <Widget>[
-            ListTile(
-              leading: const Icon(Icons.restore),
-              title: const Text("Reset Database"),
-              onTap: () => showDialog(
-                context: context,
-                builder: (BuildContext context) => AlertDialog(
-                  title: const Text("Reset Database"),
-                  content: const Text(
-                    "Are you sure you want to delete all words in the database?",
-                  ),
-                  actions: <Widget>[
-                    TextButton(
-                      child: const Text("Yes"),
-                      onPressed: () {
-                        context.read<Database>().reset();
-                        Navigator.of(context).pop();
-                      },
-                    ),
-                    TextButton(
-                      child: const Text("No"),
-                      onPressed: () => Navigator.of(context).pop(),
-                    ),
-                  ],
+      drawer: NavigationDrawer(
+        //width: MediaQuery.sizeOf(context).width * 0.8,
+        children: <Widget>[
+          ListTile(
+            leading: const Icon(Icons.restore),
+            title: const Text("Reset Database"),
+            onTap: () => showDialog(
+              context: context,
+              builder: (BuildContext context) => AlertDialog(
+                title: const Text("Reset Database"),
+                content: const Text(
+                  "Are you sure you want to delete all words in the database?",
                 ),
+                actions: <Widget>[
+                  TextButton(
+                    child: const Text("Yes"),
+                    onPressed: () {
+                      context.read<Database>().reset();
+                      Navigator.of(context).pop();
+                    },
+                  ),
+                  TextButton(
+                    child: const Text("No"),
+                    onPressed: () => Navigator.of(context).pop(),
+                  ),
+                ],
               ),
             ),
-            ListTile(
-              leading: const Icon(Icons.file_download),
-              title: const Text("Export Data"),
-              onTap: () async {
-                String? dir = await FilePicker.platform.getDirectoryPath();
-                if (dir != null) {
-                  db.export(dir);
-                }
-              },
-            ),
-            ListTile(
-              leading: const Icon(Icons.file_download),
-              title: const Text("Import Data"),
-              onTap: () async {
-                FilePickerResult? file = await FilePicker.platform.pickFiles();
-                if (file != null && file.files[0].path != null) {
-                  db.import(File(file.files[0].path!));
-                }
-              },
-            ),
-            ListTile(
-              leading: const Icon(Icons.settings),
-              title: const Text("Settings"),
-              onTap: () async {
-                setState(() {
-                  page = Pages.settings;
-                });
-              },
-            ),
-          ],
-        ),
+          ),
+          ListTile(
+            leading: const Icon(Icons.file_download),
+            title: const Text("Export Data"),
+            onTap: () async {
+              String? dir = await FilePicker.platform.getDirectoryPath();
+              if (dir != null) {
+                db.export(dir);
+              }
+            },
+          ),
+          ListTile(
+            leading: const Icon(Icons.file_download),
+            title: const Text("Import Data"),
+            onTap: () async {
+              FilePickerResult? file = await FilePicker.platform.pickFiles();
+              if (file != null && file.files[0].path != null) {
+                db.import(File(file.files[0].path!));
+              }
+            },
+          ),
+          ListTile(
+            leading: const Icon(Icons.settings),
+            title: const Text("Settings"),
+            onTap: () async {
+              setState(() {
+                page = Pages.settings;
+              });
+              Navigator.of(context).pop();
+            },
+          ),
+        ],
       ),
     );
   }
@@ -227,5 +226,18 @@ class _HomePageState extends State<HomePage> {
         return;
       }
     }
+  }
+}
+
+String pageName(Pages page) {
+  switch (page) {
+    case (Pages.test):
+      return "SignFlash";
+    case (Pages.list):
+      return "Words";
+    case (Pages.edit):
+      return "Edit";
+    case (Pages.settings):
+      return "Settings";
   }
 }
