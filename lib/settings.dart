@@ -1,12 +1,26 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 enum Language { bsl, asl }
 
 class Settings with ChangeNotifier {
-  Language language = Language.bsl;
-  void updateLanguage(Language l) {
-    language = l;
+  SharedPreferences? prefs;
+  Settings() {
+    initialise();
+  }
+  Future<void> initialise() async {
+    prefs = await SharedPreferences.getInstance();
+  }
+
+  Language get language {
+    if (prefs == null) return Language.bsl;
+    return Language.values[prefs!.getInt("language") ?? 0];
+  }
+
+  void updateLanguage(Language l) async {
+    if (prefs == null) return;
+    await prefs!.setInt("language", l.index);
     notifyListeners();
   }
 }
