@@ -7,7 +7,7 @@ import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 class TestPage extends StatelessWidget {
-  final int id;
+  final int? id;
   final void Function(bool success) answer;
   final void Function() edit;
   const TestPage({
@@ -19,24 +19,24 @@ class TestPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    if (id == null) {
+      return Container(
+        padding: EdgeInsets.all(20),
+        alignment: Alignment.center,
+        child: Text(
+          "Add some words",
+          style: TextStyle(fontSize: 30),
+        ),
+      );
+    }
     final settings = context.watch<Settings>();
     return FutureBuilder(
-      future: context.watch<Database>().wordAndAttempts(id),
+      future: context.watch<Database>().wordAndAttempts(id!),
       builder:
           (
             BuildContext context,
             AsyncSnapshot<MapEntry<String, List<bool>>?> word,
           ) {
-            if (!word.hasData && word.connectionState == ConnectionState.done) {
-              return Container(
-                padding: EdgeInsets.all(20),
-                alignment: Alignment.center,
-                child: Text(
-                  "Add some words to the database",
-                  style: TextStyle(fontSize: 30),
-                ),
-              );
-            }
             List<Widget> successIcons = [];
             if (word.hasData) {
               final v = word.data!.value;

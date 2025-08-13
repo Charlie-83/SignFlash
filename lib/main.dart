@@ -27,13 +27,35 @@ class App extends StatelessWidget {
           seedColor: Colors.deepPurple,
         ),
       ),
-      home: MultiProvider(
-        providers: [
-          ChangeNotifierProvider(create: (_) => Database()),
-          ChangeNotifierProvider(create: (_) => TestIDModel()),
-          ChangeNotifierProvider(create: (_) => Settings()),
-        ],
-        child: const HomePage(title: 'SignFlash'),
+      home: ChangeNotifierProvider(
+        create: (_) => Database(),
+        builder: (BuildContext context, Widget? _) => FutureBuilder(
+          future: context.read<Database>().allAttempts(),
+
+          builder:
+              (
+                BuildContext context,
+                AsyncSnapshot<Map<int, List<bool>>> attempts,
+              ) {
+                if (attempts.hasData) {
+                  return MultiProvider(
+                    providers: [
+                      ChangeNotifierProvider(
+                        create: (_) => TestIDModel(
+                          testId: attempts.data!.isNotEmpty
+                              ? next(attempts.data!)
+                              : null,
+                        ),
+                      ),
+                      ChangeNotifierProvider(create: (_) => Settings()),
+                    ],
+                    builder: (BuildContext context, Widget? _) =>
+                        HomePage(title: 'SignFlash'),
+                  );
+                }
+                return Container();
+              },
+        ),
       ),
     );
   }
@@ -51,8 +73,10 @@ class HomePage extends StatefulWidget {
 enum Pages { test, list, edit, settings }
 
 class TestIDModel with ChangeNotifier {
-  int testId = 1;
-  void update(int id) {
+  // This is in a model so that it can be changed by the edit page when the current testId is deleted
+  int? testId;
+  TestIDModel({required this.testId});
+  void update(int? id) {
     testId = id;
     notifyListeners();
   }
@@ -61,26 +85,35 @@ class TestIDModel with ChangeNotifier {
 class _HomePageState extends State<HomePage> {
   int? editId;
   Pages page = Pages.test;
+  Pages previousPage =
+      Pages.test; // Just used to go back to test/list after edit
 
   @override
   Widget build(BuildContext context) {
     Widget pageWidget;
     switch (page) {
       case (Pages.test):
-        pageWidget = ChangeNotifierProvider(
-          create: (context) => TestIDModel(),
-          child: TestPage(
-            id: context.watch<TestIDModel>().testId,
-            answer: (bool success) {
-              next(context, success);
-            },
-            edit: () {
-              setState(() {
-                page = Pages.edit;
-                editId = context.read<TestIDModel>().testId;
-              });
-            },
-          ),
+        pageWidget = TestPage(
+          id: context.watch<TestIDModel>().testId,
+          answer: (bool success) async {
+            var db = context.read<Database>();
+            TestIDModel testIDModel = context.read<TestIDModel>();
+            if (testIDModel.testId != null) {
+              db.newAttempt(testIDModel.testId!, success);
+            }
+            int? newId = await nextAsync(context);
+            if (newId == testIDModel.testId) {
+              newId = await db.nextValid(newId);
+            }
+            testIDModel.update(newId);
+          },
+          edit: () {
+            setState(() {
+              page = Pages.edit;
+              previousPage = Pages.test;
+              editId = context.read<TestIDModel>().testId;
+            });
+          },
         );
         break;
       case (Pages.list):
@@ -88,6 +121,7 @@ class _HomePageState extends State<HomePage> {
           setEdit: (int? id) {
             setState(() {
               page = Pages.edit;
+              previousPage = Pages.list;
               editId = id;
             });
           },
@@ -98,7 +132,7 @@ class _HomePageState extends State<HomePage> {
           id: editId,
           done: () {
             setState(() {
-              page = Pages.list;
+              page = previousPage;
             });
           },
         );
@@ -109,6 +143,7 @@ class _HomePageState extends State<HomePage> {
     }
 
     final db = context.read<Database>();
+    final testId = context.read<TestIDModel>();
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Theme.of(context).colorScheme.inversePrimary,
@@ -130,7 +165,7 @@ class _HomePageState extends State<HomePage> {
         children: <Widget>[
           ListTile(
             leading: const Icon(Icons.restore),
-            title: const Text("Reset Database"),
+            title: const Text("Delete all words"),
             onTap: () => showDialog(
               context: context,
               builder: (BuildContext context) => AlertDialog(
@@ -142,7 +177,9 @@ class _HomePageState extends State<HomePage> {
                   TextButton(
                     child: const Text("Yes"),
                     onPressed: () {
-                      context.read<Database>().reset();
+                      db.reset();
+                      testId.update(null);
+                      Navigator.of(context).pop();
                       Navigator.of(context).pop();
                     },
                   ),
@@ -188,45 +225,46 @@ class _HomePageState extends State<HomePage> {
       ),
     );
   }
+}
 
-  void next(BuildContext context, bool correct) async {
-    var db = context.read<Database>();
-    db.newAttempt(context.read<TestIDModel>().testId, correct);
-    final attempts = await db.allAttempts();
-    final sum = attempts.entries.fold(
-      0,
-      (count, entry) =>
-          count +
-          max(
-            1,
-            entry.value
-                .sublist(entry.value.length - min(5, entry.value.length))
-                .fold(
-                  5 - min(5, entry.value.length),
-                  (entryCount, b) => entryCount + (!b ? 1 : 0),
-                ),
+Future<int> nextAsync(BuildContext context) async {
+  var db = context.read<Database>();
+  final attempts = await db.allAttempts();
+  return next(attempts);
+}
+
+int next(Map<int, List<bool>> attempts) {
+  final sum = attempts.entries.fold(
+    0,
+    (count, entry) =>
+        count +
+        max(
+          1,
+          entry.value
+              .sublist(entry.value.length - min(5, entry.value.length))
+              .fold(
+                5 - min(5, entry.value.length),
+                (entryCount, b) => entryCount + (!b ? 1 : 0),
+              ),
+        ),
+  );
+  int nextCount = (Random().nextDouble() * sum).toInt();
+  int count = 0;
+  for (final entry in attempts.entries) {
+    count += max(
+      1,
+      entry.value
+          .sublist(entry.value.length - min(5, entry.value.length))
+          .fold(
+            5 - min(5, entry.value.length),
+            (entryCount, b) => entryCount + (!b ? 1 : 0),
           ),
     );
-    int nextCount = (Random().nextDouble() * sum).toInt();
-    int count = 0;
-    for (final entry in attempts.entries) {
-      count += max(
-        1,
-        entry.value
-            .sublist(entry.value.length - min(5, entry.value.length))
-            .fold(
-              5 - min(5, entry.value.length),
-              (entryCount, b) => entryCount + (!b ? 1 : 0),
-            ),
-      );
-      if (count >= nextCount) {
-        setState(() {
-          context.read<TestIDModel>().update(entry.key);
-        });
-        return;
-      }
+    if (count >= nextCount) {
+      return entry.key;
     }
   }
+  return 1;
 }
 
 String pageName(Pages page) {

@@ -60,10 +60,7 @@ class EditPage extends StatelessWidget {
                     );
                     if (confirm != null && confirm) {
                       db.deleteRow(id!);
-                      final words = await db.words();
-                      if (words.isNotEmpty) {
-                        testIdModel.update(words.entries.toList()[0].key);
-                      }
+                      testIdModel.update(await db.nextValid(id!));
                       done();
                     }
                   },
@@ -85,10 +82,13 @@ class EditPage extends StatelessWidget {
                 FloatingActionButton.small(
                   child: Icon(Icons.save),
                   onPressed: () async {
-                    context.read<Database>().updateOrAddWord(
+                    int newId = await context.read<Database>().updateOrAddWord(
                       id,
                       controller.text,
                     );
+                    if (testIdModel.testId == null) {
+                      testIdModel.update(newId);
+                    }
                     done();
                   },
                 ),

@@ -99,12 +99,17 @@ class Database with ChangeNotifier {
     notifyListeners();
   }
 
-  Future<void> updateOrAddWord(int? id, String word) async {
+  Future<int> updateOrAddWord(int? id, String word) async {
     var db = await db_;
     if (id == null) {
-      db.insert("Vocab", {"word": word, "attempts": ""});
+      return db.insert("Vocab", {"word": word, "attempts": ""});
     } else {
-      db.update("Vocab", where: "id = ?", whereArgs: [id], {"word": word});
+      return db.update(
+        "Vocab",
+        where: "id = ?",
+        whereArgs: [id],
+        {"word": word},
+      );
     }
   }
 
@@ -186,5 +191,21 @@ class Database with ChangeNotifier {
       return map;
     });
     return out;
+  }
+
+  Future<int?> nextValid(int id) async {
+    var db = await db_;
+    final queryResult = await db.query("Vocab", columns: ["id"], orderBy: "id");
+    for (final row in queryResult) {
+      int newId = row["id"] as int;
+      if (newId < id) {
+        return newId;
+      }
+    }
+    if (queryResult.isNotEmpty && queryResult[0]["id"] as int == id) {
+      // It's the only id
+      return id;
+    }
+    return null;
   }
 }
