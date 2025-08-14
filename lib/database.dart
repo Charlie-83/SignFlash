@@ -1,5 +1,7 @@
+import 'dart:convert';
 import 'dart:io';
 
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/foundation.dart';
 import 'package:sqflite/sqflite.dart' as sql;
 
@@ -43,17 +45,15 @@ class Database with ChangeNotifier {
     return out;
   }
 
-  Future<void> export(String dir) async {
+  Future<void> export() async {
     var db = await db_;
-    String filePath = "$dir/signflash_export.txt";
-    int counter = 1;
-    while (File(filePath).existsSync()) {
-      filePath = "$dir/signflash_export_$counter.txt";
-      counter++;
-    }
     final queryResult = await db.query("Vocab", columns: ["word"]);
-    File(filePath).writeAsStringSync(
+    final bytes = utf8.encode(
       queryResult.map((cols) => cols["word"].toString()).join("\n"),
+    );
+    FilePicker.platform.saveFile(
+      fileName: "signflash_export.txt",
+      bytes: bytes,
     );
   }
 

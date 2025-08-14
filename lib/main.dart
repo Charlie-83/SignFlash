@@ -161,7 +161,6 @@ class _HomePageState extends State<HomePage> {
         }),
       ),
       drawer: NavigationDrawer(
-        //width: MediaQuery.sizeOf(context).width * 0.8,
         children: <Widget>[
           ListTile(
             leading: const Icon(Icons.restore),
@@ -195,14 +194,11 @@ class _HomePageState extends State<HomePage> {
             leading: const Icon(Icons.file_download),
             title: const Text("Export Data"),
             onTap: () async {
-              String? dir = await FilePicker.platform.getDirectoryPath();
-              if (dir != null) {
-                db.export(dir);
-              }
+              db.export();
             },
           ),
           ListTile(
-            leading: const Icon(Icons.file_download),
+            leading: const Icon(Icons.file_upload),
             title: const Text("Import Data"),
             onTap: () async {
               FilePickerResult? file = await FilePicker.platform.pickFiles();
