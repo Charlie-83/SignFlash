@@ -57,10 +57,15 @@ class Database with ChangeNotifier {
     );
   }
 
-  Future<void> import(File file) async {
-    var db = await db_;
+  Future<void> importFile(File file) async {
     final lines = file.readAsLinesSync();
+    importLines(lines);
+  }
+
+  Future<void> importLines(List<String> lines) async {
+    var db = await db_;
     for (final line in lines) {
+      if (line == "") continue;
       db.insert("Vocab", {"word": line, "attempts": ""});
     }
     notifyListeners();
@@ -198,13 +203,12 @@ class Database with ChangeNotifier {
     final queryResult = await db.query("Vocab", columns: ["id"], orderBy: "id");
     for (final row in queryResult) {
       int newId = row["id"] as int;
-      if (newId < id) {
+      if (newId > id) {
         return newId;
       }
     }
-    if (queryResult.isNotEmpty && queryResult[0]["id"] as int == id) {
-      // It's the only id
-      return id;
+    if (queryResult.isNotEmpty) {
+      return queryResult[0]["id"] as int;
     }
     return null;
   }

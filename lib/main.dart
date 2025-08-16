@@ -3,6 +3,7 @@ import 'dart:math';
 
 import 'package:signflash/database.dart';
 import 'package:signflash/edit.dart';
+import 'package:signflash/initialise.dart';
 import 'package:signflash/list.dart';
 import 'package:signflash/settings.dart';
 import 'package:signflash/test.dart';
@@ -90,6 +91,11 @@ class _HomePageState extends State<HomePage> {
 
   @override
   Widget build(BuildContext context) {
+    Settings settings = context.watch<Settings>();
+    if (!settings.isAppInitialised) {
+      return InitialisePage();
+    }
+
     Widget pageWidget;
     switch (page) {
       case (Pages.test):
@@ -166,13 +172,13 @@ class _HomePageState extends State<HomePage> {
         children: <Widget>[
           ListTile(
             leading: const Icon(Icons.restore),
-            title: const Text("Delete all words"),
+            title: const Text("Reset app"),
             onTap: () => showDialog(
               context: context,
               builder: (BuildContext context) => AlertDialog(
-                title: const Text("Reset Database"),
+                title: const Text("Reset App"),
                 content: const Text(
-                  "Are you sure you want to delete all words in the database?",
+                  "Are you sure you want to delete all words?",
                 ),
                 actions: <Widget>[
                   TextButton(
@@ -180,6 +186,7 @@ class _HomePageState extends State<HomePage> {
                     onPressed: () {
                       db.reset();
                       testId.update(null);
+                      settings.deinitialiseApp();
                       Navigator.of(context).pop();
                       Navigator.of(context).pop();
                     },
@@ -205,7 +212,11 @@ class _HomePageState extends State<HomePage> {
             onTap: () async {
               FilePickerResult? file = await FilePicker.platform.pickFiles();
               if (file != null && file.files[0].path != null) {
-                db.import(File(file.files[0].path!));
+                db.importFile(File(file.files[0].path!));
+                int? nextValid = await db.nextValid(0);
+                if (testId.testId == null && nextValid != null) {
+                  testId.update(nextValid);
+                }
               }
             },
           ),

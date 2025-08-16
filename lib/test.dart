@@ -23,10 +23,7 @@ class TestPage extends StatelessWidget {
       return Container(
         padding: EdgeInsets.all(20),
         alignment: Alignment.center,
-        child: Text(
-          "Add some words",
-          style: TextStyle(fontSize: 30),
-        ),
+        child: Text("Add some words", style: TextStyle(fontSize: 30)),
       );
     }
     final settings = context.watch<Settings>();

@@ -18,20 +18,35 @@ class Settings with ChangeNotifier {
     return Language.values[prefs!.getInt("language") ?? 0];
   }
 
-  String? get customUrl {
-    if (prefs == null) return null;
-    return prefs!.getString("customUrl");
-  }
-
   void updateLanguage(Language l) async {
     if (prefs == null) return;
     await prefs!.setInt("language", l.index);
     notifyListeners();
   }
 
+  String? get customUrl {
+    if (prefs == null) return null;
+    return prefs!.getString("customUrl");
+  }
+
   void updateCustomUrl(String url) async {
     if (prefs == null) return;
     await prefs!.setString("customUrl", url);
+    notifyListeners();
+  }
+
+  bool get isAppInitialised {
+    if (prefs == null) return false;
+    return prefs!.getBool("isAppInitialised") ?? false;
+  }
+
+  void initialiseApp() {
+    prefs!.setBool("isAppInitialised", true);
+    notifyListeners();
+  }
+
+  void deinitialiseApp() {
+    prefs!.remove("isAppInitialised");
     notifyListeners();
   }
 }
