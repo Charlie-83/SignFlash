@@ -57,8 +57,8 @@ class _InitialisePageState extends State<InitialisePage> {
           mainAxisAlignment: MainAxisAlignment.spaceAround,
           children: [
             Text(
-              "Would you like to import a basic set of words to start?",
-              style: TextStyle(fontSize: 30),
+              "Would you like to import a basic set of words to get you started? You can add to/delete from these later.",
+              style: TextStyle(fontSize: 25),
             ),
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
@@ -80,7 +80,7 @@ class _InitialisePageState extends State<InitialisePage> {
                 ),
                 SizedBox(width: 20),
                 FloatingActionButton.large(
-                  child: Icon(Icons.delete),
+                  child: Icon(Icons.close),
                   onPressed: () {
                     settings.initialiseApp();
                   },

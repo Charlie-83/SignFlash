@@ -92,160 +92,167 @@ class _HomePageState extends State<HomePage> {
 
   @override
   Widget build(BuildContext context) {
-    Settings settings = context.watch<Settings>();
-    if (!settings.isAppInitialised) {
-      return InitialisePage();
-    }
+    return FutureBuilder(
+      future: context.watch<Settings>().isAppInitialised,
+      builder: (BuildContext context, AsyncSnapshot<bool> isAppInitialised) {
+        if (!isAppInitialised.hasData) return Container();
+        if (!isAppInitialised.data!) return InitialisePage();
+        Settings settings = context.watch<Settings>();
+        Widget pageWidget;
+        switch (page) {
+          case (Pages.test):
+            pageWidget = TestPage(
+              id: context.watch<TestIDModel>().testId,
+              answer: (bool success) async {
+                var db = context.read<Database>();
+                TestIDModel testIDModel = context.read<TestIDModel>();
+                int? newId = await nextAsync(context);
+                int? oldId = testIDModel.testId;
+                if (newId == oldId) {
+                  newId = await db.nextValid(newId);
+                }
+                testIDModel.update(newId);
+                if (oldId != null) {
+                  // After the test id changes so the new attempts don't appear for a single frame
+                  db.newAttempt(oldId, success);
+                }
+              },
+              edit: () {
+                setState(() {
+                  page = Pages.edit;
+                  previousPage = Pages.test;
+                  editId = context.read<TestIDModel>().testId;
+                });
+              },
+            );
+            break;
+          case (Pages.list):
+            pageWidget = WordListPage(
+              setEdit: (int? id) {
+                setState(() {
+                  page = Pages.edit;
+                  previousPage = Pages.list;
+                  editId = id;
+                });
+              },
+            );
+            break;
+          case (Pages.edit):
+            pageWidget = EditPage(
+              id: editId,
+              done: () {
+                setState(() {
+                  page = previousPage;
+                });
+              },
+            );
+            break;
+          case (Pages.settings):
+            pageWidget = SettingsPage();
+            break;
+          case (Pages.info):
+            pageWidget = InfoPage();
+            break;
+        }
 
-    Widget pageWidget;
-    switch (page) {
-      case (Pages.test):
-        pageWidget = TestPage(
-          id: context.watch<TestIDModel>().testId,
-          answer: (bool success) async {
-            var db = context.read<Database>();
-            TestIDModel testIDModel = context.read<TestIDModel>();
-            int? newId = await nextAsync(context);
-            int? oldId = testIDModel.testId;
-            if (newId == oldId) {
-              newId = await db.nextValid(newId);
-            }
-            testIDModel.update(newId);
-            if (oldId != null) {
-              // After the test id changes so the new attempts don't appear for a single frame
-              db.newAttempt(oldId, success);
-            }
-          },
-          edit: () {
-            setState(() {
-              page = Pages.edit;
-              previousPage = Pages.test;
-              editId = context.read<TestIDModel>().testId;
-            });
-          },
-        );
-        break;
-      case (Pages.list):
-        pageWidget = WordListPage(
-          setEdit: (int? id) {
-            setState(() {
-              page = Pages.edit;
-              previousPage = Pages.list;
-              editId = id;
-            });
-          },
-        );
-        break;
-      case (Pages.edit):
-        pageWidget = EditPage(
-          id: editId,
-          done: () {
-            setState(() {
-              page = previousPage;
-            });
-          },
-        );
-        break;
-      case (Pages.settings):
-        pageWidget = SettingsPage();
-        break;
-      case (Pages.info):
-        pageWidget = InfoPage();
-        break;
-    }
-
-    final db = context.read<Database>();
-    final testId = context.read<TestIDModel>();
-    return Scaffold(
-      appBar: AppBar(
-        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
-        title: Text(pageName(page)),
-      ),
-      body: pageWidget,
-      floatingActionButton: FloatingActionButton(
-        child: Icon(page == Pages.test ? Icons.list : Icons.lightbulb),
-        onPressed: () => setState(() {
-          if (page == Pages.test) {
-            page = Pages.list;
-          } else {
-            page = Pages.test;
-          }
-        }),
-      ),
-      drawer: NavigationDrawer(
-        children: <Widget>[
-          ListTile(
-            leading: const Icon(Icons.restore),
-            title: const Text("Reset app"),
-            onTap: () => showDialog(
-              context: context,
-              builder: (BuildContext context) => AlertDialog(
-                title: const Text("Reset App"),
-                content: const Text(
-                  "Are you sure you want to delete all words?",
+        final db = context.read<Database>();
+        final testId = context.read<TestIDModel>();
+        return Scaffold(
+          appBar: AppBar(
+            backgroundColor: Theme.of(context).colorScheme.inversePrimary,
+            title: Text(pageName(page)),
+          ),
+          body: pageWidget,
+          floatingActionButton: FloatingActionButton(
+            child: Icon(page == Pages.test ? Icons.list : Icons.lightbulb),
+            onPressed: () => setState(() {
+              if (page == Pages.test) {
+                page = Pages.list;
+              } else {
+                page = Pages.test;
+              }
+            }),
+          ),
+          drawer: SizedBox(
+            width: MediaQuery.of(context).size.width * 0.8,
+            child: NavigationDrawer(
+              children: <Widget>[
+                ListTile(
+                  leading: const Icon(Icons.restore),
+                  title: const Text("Reset app"),
+                  onTap: () => showDialog(
+                    context: context,
+                    builder: (BuildContext context) => AlertDialog(
+                      title: const Text("Reset App"),
+                      content: const Text(
+                        "Are you sure you want to delete all words?",
+                      ),
+                      actions: <Widget>[
+                        TextButton(
+                          child: const Text("Yes"),
+                          onPressed: () {
+                            db.reset();
+                            testId.update(null);
+                            settings.deinitialiseApp();
+                            Navigator.of(context).pop();
+                            Navigator.of(context).pop();
+                          },
+                        ),
+                        TextButton(
+                          child: const Text("No"),
+                          onPressed: () => Navigator.of(context).pop(),
+                        ),
+                      ],
+                    ),
+                  ),
                 ),
-                actions: <Widget>[
-                  TextButton(
-                    child: const Text("Yes"),
-                    onPressed: () {
-                      db.reset();
-                      testId.update(null);
-                      settings.deinitialiseApp();
-                      Navigator.of(context).pop();
-                      Navigator.of(context).pop();
-                    },
-                  ),
-                  TextButton(
-                    child: const Text("No"),
-                    onPressed: () => Navigator.of(context).pop(),
-                  ),
-                ],
-              ),
+                ListTile(
+                  leading: const Icon(Icons.file_download),
+                  title: const Text("Export Data"),
+                  onTap: () async {
+                    db.export();
+                  },
+                ),
+                ListTile(
+                  leading: const Icon(Icons.file_upload),
+                  title: const Text("Import Data"),
+                  onTap: () async {
+                    FilePickerResult? file = await FilePicker.platform
+                        .pickFiles();
+                    if (file != null && file.files[0].path != null) {
+                      db.importFile(File(file.files[0].path!));
+                      int? nextValid = await db.nextValid(0);
+                      if (testId.testId == null && nextValid != null) {
+                        testId.update(nextValid);
+                      }
+                    }
+                  },
+                ),
+                ListTile(
+                  leading: const Icon(Icons.settings),
+                  title: const Text("Settings"),
+                  onTap: () async {
+                    setState(() {
+                      page = Pages.settings;
+                    });
+                    Navigator.of(context).pop();
+                  },
+                ),
+                ListTile(
+                  leading: const Icon(Icons.info),
+                  title: const Text("Info & Contact"),
+                  onTap: () async {
+                    setState(() {
+                      page = Pages.info;
+                    });
+                    Navigator.of(context).pop();
+                  },
+                ),
+              ],
             ),
           ),
-          ListTile(
-            leading: const Icon(Icons.file_download),
-            title: const Text("Export Data"),
-            onTap: () async {
-              db.export();
-            },
-          ),
-          ListTile(
-            leading: const Icon(Icons.file_upload),
-            title: const Text("Import Data"),
-            onTap: () async {
-              FilePickerResult? file = await FilePicker.platform.pickFiles();
-              if (file != null && file.files[0].path != null) {
-                db.importFile(File(file.files[0].path!));
-                int? nextValid = await db.nextValid(0);
-                if (testId.testId == null && nextValid != null) {
-                  testId.update(nextValid);
-                }
-              }
-            },
-          ),
-          ListTile(
-            leading: const Icon(Icons.settings),
-            title: const Text("Settings"),
-            onTap: () async {
-              setState(() {
-                page = Pages.settings;
-              });
-              Navigator.of(context).pop();
-            },
-          ),
-          ListTile(
-            leading: const Icon(Icons.info),
-            title: const Text("Info & Contact"),
-            onTap: () async {
-              setState(() {
-                page = Pages.info;
-              });
-              Navigator.of(context).pop();
-            },
-          ),
-        ],
-      ),
+        );
+      },
     );
   }
 }

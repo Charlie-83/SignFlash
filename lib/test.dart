@@ -85,7 +85,7 @@ class TestPage extends StatelessWidget {
                                 "",
                               );
                               late String urlString;
-                              switch (settings.language) {
+                              switch (await settings.language) {
                                 case (Language.bsl):
                                   urlString = "https://www.signbsl.com/sign/*";
                                   break;
@@ -93,7 +93,7 @@ class TestPage extends StatelessWidget {
                                   urlString = "https://www.signasl.org/sign/*";
                                   break;
                                 case (Language.custom):
-                                  urlString = settings.customUrl ?? "";
+                                  urlString = await settings.customUrl ?? "";
                                   break;
                               }
                               urlString = urlString.replaceAll("*", wordString);
