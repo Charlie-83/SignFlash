@@ -3,6 +3,7 @@ import 'dart:math';
 
 import 'package:signflash/database.dart';
 import 'package:signflash/edit.dart';
+import 'package:signflash/info.dart';
 import 'package:signflash/initialise.dart';
 import 'package:signflash/list.dart';
 import 'package:signflash/settings.dart';
@@ -71,7 +72,7 @@ class HomePage extends StatefulWidget {
   State<HomePage> createState() => _HomePageState();
 }
 
-enum Pages { test, list, edit, settings }
+enum Pages { test, list, edit, settings, info }
 
 class TestIDModel with ChangeNotifier {
   // This is in a model so that it can be changed by the edit page when the current testId is deleted
@@ -147,6 +148,9 @@ class _HomePageState extends State<HomePage> {
         break;
       case (Pages.settings):
         pageWidget = SettingsPage();
+        break;
+      case (Pages.info):
+        pageWidget = InfoPage();
         break;
     }
 
@@ -230,6 +234,16 @@ class _HomePageState extends State<HomePage> {
               Navigator.of(context).pop();
             },
           ),
+          ListTile(
+            leading: const Icon(Icons.info),
+            title: const Text("Info & Contact"),
+            onTap: () async {
+              setState(() {
+                page = Pages.info;
+              });
+              Navigator.of(context).pop();
+            },
+          ),
         ],
       ),
     );
@@ -286,5 +300,7 @@ String pageName(Pages page) {
       return "Edit";
     case (Pages.settings):
       return "Settings";
+    case (Pages.info):
+      return "Info & Contact";
   }
 }
