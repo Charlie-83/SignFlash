@@ -98,14 +98,16 @@ class _HomePageState extends State<HomePage> {
           answer: (bool success) async {
             var db = context.read<Database>();
             TestIDModel testIDModel = context.read<TestIDModel>();
-            if (testIDModel.testId != null) {
-              db.newAttempt(testIDModel.testId!, success);
-            }
             int? newId = await nextAsync(context);
-            if (newId == testIDModel.testId) {
+            int? oldId = testIDModel.testId;
+            if (newId == oldId) {
               newId = await db.nextValid(newId);
             }
             testIDModel.update(newId);
+            if (oldId != null) {
+              // After the test id changes so the new attempts don't appear for a single frame
+              db.newAttempt(oldId, success);
+            }
           },
           edit: () {
             setState(() {
