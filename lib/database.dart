@@ -3,6 +3,7 @@ import 'dart:io';
 
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/foundation.dart';
+import 'package:intl/intl.dart';
 import 'package:sqflite/sqflite.dart' as sql;
 
 class Database with ChangeNotifier {
@@ -51,8 +52,9 @@ class Database with ChangeNotifier {
     final bytes = utf8.encode(
       queryResult.map((cols) => cols["word"].toString()).join("\n"),
     );
+    String date = DateFormat("yy-MM-dd").format(DateTime.now());
     FilePicker.platform.saveFile(
-      fileName: "signflash_export.txt",
+      fileName: "signflash_export-$date.txt",
       bytes: bytes,
     );
   }
