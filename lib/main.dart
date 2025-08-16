@@ -178,35 +178,6 @@ class _HomePageState extends State<HomePage> {
             child: NavigationDrawer(
               children: <Widget>[
                 ListTile(
-                  leading: const Icon(Icons.restore),
-                  title: const Text("Reset app"),
-                  onTap: () => showDialog(
-                    context: context,
-                    builder: (BuildContext context) => AlertDialog(
-                      title: const Text("Reset App"),
-                      content: const Text(
-                        "Are you sure you want to delete all words?",
-                      ),
-                      actions: <Widget>[
-                        TextButton(
-                          child: const Text("Yes"),
-                          onPressed: () {
-                            db.reset();
-                            testId.update(null);
-                            settings.deinitialiseApp();
-                            Navigator.of(context).pop();
-                            Navigator.of(context).pop();
-                          },
-                        ),
-                        TextButton(
-                          child: const Text("No"),
-                          onPressed: () => Navigator.of(context).pop(),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-                ListTile(
                   leading: const Icon(Icons.file_download),
                   title: const Text("Export Data"),
                   onTap: () async {

@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:signflash/database.dart';
+import 'package:signflash/main.dart';
 
 enum Language { bsl, asl, custom }
 
@@ -127,6 +130,75 @@ class SettingsPage extends StatelessWidget {
             ),
           );
         }
+        Database db = context.read<Database>();
+        TestIDModel testId = context.read<TestIDModel>();
+        rows.addAll([
+          SizedBox(height: 30),
+          TextButton(
+            child: const Text("Import Starter Words"),
+            onPressed: () async {
+              bool add =
+                  (await showDialog<bool>(
+                    context: context,
+                    builder: (BuildContext context) => AlertDialog(
+                      title: const Text("Import Start Words"),
+                      content: const Text(
+                        "This will import over 100 basic words. Would you like to continue?",
+                      ),
+                      actions: <Widget>[
+                        TextButton(
+                          child: const Text("Yes"),
+                          onPressed: () => Navigator.of(context).pop(true),
+                        ),
+                        TextButton(
+                          child: const Text("No"),
+                          onPressed: () => Navigator.of(context).pop(false),
+                        ),
+                      ],
+                    ),
+                  )) ??
+                  false;
+              if (add) {
+                await db.importLines(
+                  (await rootBundle.loadString(
+                    "assets/words/basic.txt",
+                  )).split("\n"),
+                );
+                int? nextValid = await db.nextValid(0);
+                if (testId.testId == null && nextValid != null) {
+                  testId.update(nextValid);
+                }
+              }
+            },
+          ),
+          TextButton(
+            child: const Text("Reset app"),
+            onPressed: () => showDialog(
+              context: context,
+              builder: (BuildContext context) => AlertDialog(
+                title: const Text("Reset App"),
+                content: const Text(
+                  "Are you sure you want to delete all words?",
+                ),
+                actions: <Widget>[
+                  TextButton(
+                    child: const Text("Yes"),
+                    onPressed: () {
+                      db.reset();
+                      testId.update(null);
+                      settings.deinitialiseApp();
+                      Navigator.of(context).pop();
+                    },
+                  ),
+                  TextButton(
+                    child: const Text("No"),
+                    onPressed: () => Navigator.of(context).pop(),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ]);
         return Padding(
           padding: EdgeInsetsGeometry.all(10),
           child: Center(child: Column(children: rows)),
